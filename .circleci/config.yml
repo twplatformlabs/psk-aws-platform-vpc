@@ -1,0 +1,268 @@
+version: 2.1
+
+# this allows you to use CircleCI's dynamic configuration feature
+setup: true
+
+# =================== global config
+
+orbs:
+  continuation: circleci/continuation@0.4.0
+  terraform: twdps/terraform@0.13.0
+  op: twdps/onepassword@1.0.0
+  do: twdps/pipeline-events@2.0.0
+
+globals:
+  - &context empc-lab
+  - &executor-image twdps/circleci-infra-aws:alpine-stable
+  - &continuation-params ""
+  - &shell op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
+  - &snyk-organization twdps
+
+# parameters:
+#   context:
+#     description: CircleCI context to store environment variables
+#     type: string
+#     default: delivery-infrastructure-global
+#   executor-image:
+#     description: Docker image to use
+#     type: string
+#     default: ghcr.io/rbmarketplace/di-circleci-infra-aws:alpine-edge
+#   continuation-params:
+#     description: parameters to be passed to continuation orb
+#     type: string
+#     default: ""
+#   shell-options:
+#     description: Default shell options
+#     type: string
+#     default: /bin/bash -eo pipefail
+#   snyk-org:
+#     description: Snky organization for scans
+#     type: string
+#     default: rb-2.0-marketplace
+
+on-push-main: &on-push-main
+  branches:
+    only: /main/
+  tags:
+    ignore: /.*/
+
+on-tag-main: &on-tag-main
+  branches:
+    ignore: /.*/
+  tags:
+    only: /.*/
+
+# ===================================
+
+commands:
+
+  set-environment:
+    description: generate environment credentials and configuration from templates
+    parameters:
+      static: 
+        description: set-environment for static-analysis only run 
+        type: boolean
+        default: false
+      account-env:
+        description: use this file for 1password ENV injection
+        type: string
+        default: ""
+      instance-name:
+        description: cluster instance
+        type: string
+        default: ""
+    steps:
+      - op/env:
+          env-file: op.<< parameters.account-env >>.env
+      - run:
+          name: set ~/.terraformrc
+          command: op inject -i tpl/terraformrc.tpl -o ~/.terraformrc
+      - when:
+          condition: << parameters.static >>
+          steps:
+            - restore_cache:
+                name: restore circlecigen generated tfvars
+                keys:
+                  - circlecigen-tfvars-$CIRCLE-SHA1
+            - run:
+                name: set << parameters.instance-name >> environment variables
+                command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.tfvars.json
+
+  # run-inspec-tests:
+  #   description: run aws inpec tests
+  #   parameters:
+  #     workspace:
+  #       description: tf workspace name
+  #       type: string
+  #   steps:
+  #     - run:
+  #         name: run inspec tests
+  #         environment:
+  #           WORKSPACE: <<parameters.workspace>>
+  #         command: bash scripts/run_inspec_integration_tests.sh << parameters.workspace >>
+
+#jobs:
+
+  # launch-dynamic-pipeline:
+  #   parameters:
+  #     pipeline-name:
+  #       description: Name of the pipeline to be generated
+  #       type: string
+  #     workflow-name:
+  #       description: Custom name for the resulting workflow within the generated_config.yml
+  #       type: string
+  #     template-file:
+  #       description: Custom CircleCI template file to use for pipeline generation
+  #       type: string
+  #       default: "."
+  #     multi-config:
+  #       description: Name of the multi-environment definition/configuration file to use
+  #       type: string
+  #       default: multi.json
+  #   executor: continuation/default
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: install circlecigen
+  #         command: sudo apt-get update && sudo apt-get install python3-pip && pip install circlecigen==0.0.9
+  #     - run:
+  #         name: generate continuation pipeline
+  #         command: circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> --template << parameters.template-file >>
+  #     - save_cache:
+  #         name: persist generated circlecigen tfvars between workflows
+  #         key: circlecigen-tfvars-{{ .Revision }}-<< parameters.pipeline-name >>
+  #         paths:
+  #           - environments/
+  #     - continuation/continue:
+  #         parameters: |
+  #           { "continuation-params": "<< parameters.pipeline-name >>" }
+  #         configuration_path: .circleci/generated_config.yml
+
+  # integration-tests:
+  #   description: Recurring job to run pipeline integration tests and detect aws configuration drift
+  #   docker:
+  #     - image: << pipeline.parameters.executor-image >>
+  #       auth:
+  #         username: $DOCKER_LOGIN
+  #         password: $DOCKER_PASSWORD
+  #   parameters:
+  #     instance_name:
+  #       description: the VPC instance to run tests against
+  #       type: string
+  #     teller_filename:
+  #       description: the teller filename to use for setting credentials
+  #       type: string
+  #     workspace:
+  #       description: the VPC instance to run tests against
+  #       type: string
+  #   steps:
+  #     - checkout
+  #     - set-environment:
+  #         instance_name: << parameters.instance_name >>
+  #         teller_filename: << parameters.teller_filename >>
+  #         pipeline-name: << pipeline.parameters.continuation-params >>
+  #     - run-inspec-tests:
+  #         workspace: << parameters.workspace >>
+
+workflows:
+  version: 2
+
+  deploy sandbox pipeline:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+    jobs:
+      - terraform/static-analysis:
+          name: static analysis of psk-aws-platform-vpc terraform
+          context: *context
+          executor-image: *executor-image
+          shell: *shell
+          snyk-organization: *snyk-organization
+          snyk-additional-args: --severity-threshold=high
+          before-static-analysis:
+            - set-environment: 
+                static: true
+                account-env: nonprod 
+          filters: *on-push-main
+
+
+  #     - pipeline-events/schedule-pipeline:
+  #         before-release:
+  #           - secret/configure-teller:
+  #               teller-filename: .teller-sandbox.yml
+  #         name: Deploy sandbox nightly schedule
+  #         scheduled-pipeline-name: nightly vpc validation - sandbox
+  #         shell: << pipeline.parameters.shell-options >>
+  #         context: << pipeline.parameters.context >>
+  #         executor-image-name: << pipeline.parameters.executor-image >>
+  #         scheduled-pipeline-description: |
+  #           Automatically triggers nightly run of main pipeline for validating vpcs in sandbox
+  #         hours-of-day: "[5]"
+  #         per-hour: 1
+  #         days-of-week: "[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]"
+  #         filters: *on-push-main
+
+  #     - pipeline-events/schedule-pipeline:
+  #         before-release:
+  #           - secret/configure-teller:
+  #               teller-filename: .teller-platform.yml
+  #         name: Deploy release nightly schedule
+  #         scheduled-pipeline-name: nightly vpc validation - release
+  #         shell: << pipeline.parameters.shell-options >>
+  #         context: << pipeline.parameters.context >>
+  #         executor-image-name: << pipeline.parameters.executor-image >>
+  #         scheduled-pipeline-description: |
+  #           Automatically triggers nightly run of main pipeline for validating vpcs in release
+  #         hours-of-day: "[5]"
+  #         per-hour: 1
+  #         days-of-week: "[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]"
+  #         filters: *on-push-main
+
+  #     - launch-dynamic-pipeline:
+  #         name: generate-sandbox-pipeline
+  #         pipeline-name: sandbox
+  #         workflow-name: sandbox-deployment
+  #         multi-config: multi.json
+  #         requires:
+  #           - static analysis
+  #         filters: *on-push-main
+
+  # deploy release pipeline:
+  #   when:
+  #     not:
+  #       equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+  #   jobs:
+  #     - launch-dynamic-pipeline:
+  #         name: generate-release-pipeline
+  #         pipeline-name: release
+  #         workflow-name: release-deployment
+  #         multi-config: multi.json
+  #         filters: *on-tag-main
+
+  # run nightly sandbox validation jobs:
+  #   when:
+  #     and:
+  #       - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+  #       - equal: [ nightly vpc validation - sandbox, << pipeline.schedule.name >> ]
+  #   jobs:
+  #     - launch-dynamic-pipeline:
+  #         name: generate-sandbox-nightly-pipeline
+  #         pipeline-name: sandbox
+  #         workflow-name: nightly-sandbox-validations
+  #         template-file: nightly.yml
+  #         multi-config: multi.json
+  #         filters: *on-push-main
+
+  # run nightly release validation jobs:
+  #   when:
+  #     and:
+  #       - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+  #       - equal: [ nightly vpc validation - release, << pipeline.schedule.name >> ]
+  #   jobs:
+  #     - launch-dynamic-pipeline:
+  #         name: generate-platform-nightly-pipeline
+  #         pipeline-name: release
+  #         workflow-name: nightly-release-validations
+  #         template-file: nightly.yml
+  #         multi-config: multi.json
+  #         filters: *on-push-main

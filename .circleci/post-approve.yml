@@ -1,0 +1,16 @@
+        - terraform/apply:
+          name: apply {{instance_name}} change plan
+          context: *context
+          shell: *shell
+          workspace: {{instance_name}}
+          var-file: {{instance_name}}.auto.tfvars.json
+          before-terraform:
+            - set-environment:
+                account-env: {{account_env}}
+                instance_name: {{instance_name}}
+          after-terraform:
+            - run-inspec-tests:
+                workspace: {{instance_name}}
+          filters: {{filters}}
+          requires:
+            - approve {{role}} changes
