@@ -77,7 +77,7 @@ commands:
       - run:
           name: set ~/.terraformrc
           command: op inject -i tpl/terraformrc.tpl -o ~/.terraformrc
-      - when:
+      - unless:
           condition: << parameters.static >>
           steps:
             - restore_cache:
