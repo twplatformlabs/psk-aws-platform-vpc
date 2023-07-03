@@ -1,0 +1,8 @@
+.venv
+.python*
+requirements*
+source.env
+*.auto.tfvars.json
+environments/*.tfvars*
+multi.json
+.terraform*
