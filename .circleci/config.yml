@@ -168,6 +168,7 @@ workflows:
 
       - launch-dynamic-pipeline:
           name: generate sandbox pipeline
+          context: *context
           pipeline-name: sandbox
           workflow-name: sandbox-deployment
           multi-config: multi.json
