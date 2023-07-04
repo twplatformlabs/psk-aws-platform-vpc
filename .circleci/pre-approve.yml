@@ -1,13 +1,15 @@
-        - terraform/plan:
+      - terraform/plan:
           name: plan {{instance_name}} change
           context: *context
           shell: *shell
           executor-image: *executor-image
           static-analysis: false
           workspace: {{instance_name}}
-          var-file: {{instance_name}}.auto.tfvars.json
+          var-file: {{instance_name}}.tfvars.json
           before-terraform:
             - set-environment:
                 account-env: {{account_env}}
-                instance_name: {{instance_name}}
+                instance-name: {{instance_name}}
           filters: {{filters}}{{priorapprovalrequired}}
+
+
