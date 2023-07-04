@@ -14,31 +14,8 @@ orbs:
 globals:
   - &context empc-lab
   - &executor-image twdps/circleci-infra-aws:alpine-stable
-  - &continuation-params ""
   - &shell op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
   - &snyk-organization twdps
-
-# parameters:
-#   context:
-#     description: CircleCI context to store environment variables
-#     type: string
-#     default: delivery-infrastructure-global
-#   executor-image:
-#     description: Docker image to use
-#     type: string
-#     default: ghcr.io/rbmarketplace/di-circleci-infra-aws:alpine-edge
-#   continuation-params:
-#     description: parameters to be passed to continuation orb
-#     type: string
-#     default: ""
-#   shell-options:
-#     description: Default shell options
-#     type: string
-#     default: /bin/bash -eo pipefail
-#   snyk-org:
-#     description: Snky organization for scans
-#     type: string
-#     default: rb-2.0-marketplace
 
 on-push-main: &on-push-main
   branches:
@@ -87,6 +64,9 @@ commands:
             - run:
                 name: set << parameters.instance-name >> environment variables
                 command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.tfvars.json
+            - run:
+                name: fetch control-plane-deployment from psk-platform-global-env-values
+                command: op inject -i tpl/multi.json.tpl -o environments/multi.json
 
   # run-inspec-tests:
   #   description: run aws inpec tests
@@ -101,42 +81,38 @@ commands:
   #           WORKSPACE: <<parameters.workspace>>
   #         command: bash scripts/run_inspec_integration_tests.sh << parameters.workspace >>
 
-#jobs:
+jobs:
 
-  # launch-dynamic-pipeline:
-  #   parameters:
-  #     pipeline-name:
-  #       description: Name of the pipeline to be generated
-  #       type: string
-  #     workflow-name:
-  #       description: Custom name for the resulting workflow within the generated_config.yml
-  #       type: string
-  #     template-file:
-  #       description: Custom CircleCI template file to use for pipeline generation
-  #       type: string
-  #       default: "."
-  #     multi-config:
-  #       description: Name of the multi-environment definition/configuration file to use
-  #       type: string
-  #       default: multi.json
-  #   executor: continuation/default
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: install circlecigen
-  #         command: sudo apt-get update && sudo apt-get install python3-pip && pip install circlecigen==0.0.9
-  #     - run:
-  #         name: generate continuation pipeline
-  #         command: circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> --template << parameters.template-file >>
-  #     - save_cache:
-  #         name: persist generated circlecigen tfvars between workflows
-  #         key: circlecigen-tfvars-{{ .Revision }}-<< parameters.pipeline-name >>
-  #         paths:
-  #           - environments/
-  #     - continuation/continue:
-  #         parameters: |
-  #           { "continuation-params": "<< parameters.pipeline-name >>" }
-  #         configuration_path: .circleci/generated_config.yml
+  launch-dynamic-pipeline:
+    parameters:
+      pipeline-name:
+        description: name of pipeline to use from the multi file
+        type: string
+      workflow-name:
+        description: Custom name for the resulting workflow within the generated_config.yml
+        type: string
+      template-file:
+        description: Custom CircleCI template file to use for pipeline generation
+        type: string
+        default: "."
+      multi-config:
+        description: Name of the multi-environment definition/configuration file to use
+        type: string
+        default: multi.json
+    executor: continuation/default
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: generate continuation pipeline
+          command: circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> --template << parameters.template-file >>
+      - save_cache:
+          name: persist generated circlecigen tfvars between workflows
+          key: circlecigen-tfvars-$CIRCLE-SHA1
+          paths:
+            - environments/
+      - continuation/continue:
+          configuration_path: .circleci/generated_config.yml
 
   # integration-tests:
   #   description: Recurring job to run pipeline integration tests and detect aws configuration drift
@@ -185,6 +161,15 @@ workflows:
                 account-env: nonprod 
           filters: *on-push-main
 
+      - launch-dynamic-pipeline:
+          name: generate sandbox pipeline
+          pipeline-name: sandbox
+          workflow-name: sandbox-deployment
+          multi-config: multi.json
+          requires:
+            - static analysis of psk-aws-platform-vpc terraform
+          filters: *on-push-main
+
 
   #     - pipeline-events/schedule-pipeline:
   #         before-release:
@@ -218,14 +203,7 @@ workflows:
   #         days-of-week: "[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]"
   #         filters: *on-push-main
 
-  #     - launch-dynamic-pipeline:
-  #         name: generate-sandbox-pipeline
-  #         pipeline-name: sandbox
-  #         workflow-name: sandbox-deployment
-  #         multi-config: multi.json
-  #         requires:
-  #           - static analysis
-  #         filters: *on-push-main
+
 
   # deploy release pipeline:
   #   when:

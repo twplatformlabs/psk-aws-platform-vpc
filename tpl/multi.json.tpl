@@ -1,0 +1,1 @@
+{{ op://empc-lab/psk-platform-global-env-values/control-plane-deployment }}
