@@ -109,7 +109,7 @@ jobs:
       - run:
           name: generate continuation pipeline
           command: |
-            op inject -i tpl/multi.json.tpl -o environments/multi.json
+            op read op://empc-lab/psk-platform-global-env-values/control-plane-deployment | base64 -d > environments/multi.json
             circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >>
       - save_cache:
           name: persist generated circlecigen tfvars between workflows
