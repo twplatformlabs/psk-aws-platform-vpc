@@ -104,6 +104,9 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
+          name: install circlecigen
+          command: sudo apt-get update && sudo apt-get install python3-pip && pip install circlecigen==0.0.9
+      - run:
           name: generate continuation pipeline
           command: circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> --template << parameters.template-file >>
       - save_cache:
