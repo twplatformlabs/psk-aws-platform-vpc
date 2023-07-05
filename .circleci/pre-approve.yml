@@ -6,10 +6,11 @@
           static-analysis: false
           workspace: {{instance_name}}
           var-file: {{instance_name}}.tfvars.json
+          tfc-local-execution-mode: true
+          tfc-organization: twdps
+          tfc-workspace-name: psk-aws-platform-vpc-{{instance_name}}
           before-terraform:
             - set-environment:
                 account-env: {{account_env}}
                 instance-name: {{instance_name}}
           filters: {{filters}}{{priorapprovalrequired}}
-
-
