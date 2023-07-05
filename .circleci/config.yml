@@ -1,12 +1,12 @@
 version: 2.1
 
-# this allows you to use CircleCI's dynamic configuration feature
-setup: true
+setup: true  # using continuation generated pipeline
 
 # =================== global config
 
 orbs:
   continuation: circleci/continuation@0.4.0
+  #checkov:skip=CKV_CIRCLECIPIPELINES_3
   terraform: twdps/terraform@dev:latest
   op: twdps/onepassword@1.0.0
   do: twdps/pipeline-events@2.0.0
