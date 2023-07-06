@@ -189,34 +189,35 @@ workflows:
           days-of-week: "[\"SUN\"]"
           filters: *on-push-main
 
-  #     - pipeline-events/schedule-pipeline:
-  #         before-release:
-  #           - secret/configure-teller:
-  #               teller-filename: .teller-platform.yml
-  #         name: Deploy release nightly schedule
-  #         scheduled-pipeline-name: nightly vpc validation - release
-  #         shell: << pipeline.parameters.shell-options >>
-  #         context: << pipeline.parameters.context >>
-  #         executor-image-name: << pipeline.parameters.executor-image >>
-  #         scheduled-pipeline-description: |
-  #           Automatically triggers nightly run of main pipeline for validating vpcs in release
-  #         hours-of-day: "[1]"
-  #         days-of-week: "[\"SUN\"]"
-  #         filters: *on-push-main
+      - do/schedule-pipeline:
+          before-release:
+            - set-environment: 
+                static: true 
+                account-env: prod
+          name: Deploy release nightly schedule
+          scheduled-pipeline-name: nightly vpc validation - release
+          shell: *shell
+          context: *context
+          executor-image-name: *executor-image
+          scheduled-pipeline-description: |
+            Automatically triggers nightly run of main pipeline for validating vpcs in release
+          hours-of-day: "[1]"
+          days-of-week: "[\"SUN\"]"
+          filters: *on-push-main
 
 
+  production release:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+    jobs:
+      - launch-dynamic-pipeline:
+          name: generate release pipeline
+          pipeline-name: release
+          workflow-name: release deployment
+          multi-config: multi.json
+          filters: *on-tag-main
 
-  # production release:
-  #   when:
-  #     not:
-  #       equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-  #   jobs:
-  #     - launch-dynamic-pipeline:
-  #         name: generate-release-pipeline
-  #         pipeline-name: release
-  #         workflow-name: release-deployment
-  #         multi-config: multi.json
-  #         filters: *on-tag-main
 
   run nightly sandbox validation jobs:
     when:
@@ -232,16 +233,16 @@ workflows:
           multi-config: multi.json
           filters: *on-push-main
 
-  # run nightly release validation jobs:
-  #   when:
-  #     and:
-  #       - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-  #       - equal: [ nightly vpc validation - release, << pipeline.schedule.name >> ]
-  #   jobs:
-  #     - launch-dynamic-pipeline:
-  #         name: generate-platform-nightly-pipeline
-  #         pipeline-name: release
-  #         workflow-name: nightly-release-validations
-  #         template-file: nightly.yml
-  #         multi-config: multi.json
-  #         filters: *on-push-main
+  run nightly release validation jobs:
+    when:
+      and:
+        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+        - equal: [ nightly-release-validation-schedule, << pipeline.schedule.name >> ]
+    jobs:
+      - launch-dynamic-pipeline:
+          name: generate-platform-nightly-pipeline
+          pipeline-name: release
+          workflow-name: nightly-release-validation
+          template-file: nightly.yml
+          multi-config: multi.json
+          filters: *on-push-main

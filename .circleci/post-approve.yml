@@ -3,7 +3,6 @@
           context: *context
           shell: *shell
           workspace: {{instance_name}}
-          #var-file: {{instance_name}}.tfvars.json
           before-terraform:
             - set-environment:
                 account-env: {{account_env}}
