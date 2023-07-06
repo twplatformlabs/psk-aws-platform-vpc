@@ -185,8 +185,7 @@ workflows:
           executor-image-name: *executor-image
           scheduled-pipeline-description: |
             Automatically triggers nightly run of main pipeline for validating sandbox deployment pipeline vpcs
-          hours-of-day: "[5]"
-          per-hour: 1
+          hours-of-day: "[1]"
           days-of-week: "[\"SUN\"]"
           filters: *on-push-main
 
@@ -201,9 +200,8 @@ workflows:
   #         executor-image-name: << pipeline.parameters.executor-image >>
   #         scheduled-pipeline-description: |
   #           Automatically triggers nightly run of main pipeline for validating vpcs in release
-  #         hours-of-day: "[5]"
-  #         per-hour: 1
-  #         days-of-week: "[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]"
+  #         hours-of-day: "[1]"
+  #         days-of-week: "[\"SUN\"]"
   #         filters: *on-push-main
 
 
