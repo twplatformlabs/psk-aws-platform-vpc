@@ -65,18 +65,18 @@ commands:
                 name: set << parameters.instance-name >> environment variables
                 command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.tfvars.json
 
-  # run-inspec-tests:
-  #   description: run aws inpec tests
-  #   parameters:
-  #     workspace:
-  #       description: tf workspace name
-  #       type: string
-  #   steps:
-  #     - run:
-  #         name: run inspec tests
-  #         environment:
-  #           WORKSPACE: <<parameters.workspace>>
-  #         command: bash scripts/run_inspec_integration_tests.sh << parameters.workspace >>
+  run-inspec-tests:
+    description: run aws inpec tests
+    parameters:
+      workspace:
+        description: tf workspace name
+        type: string
+    steps:
+      - run:
+          name: run inspec tests
+          environment:
+            WORKSPACE: <<parameters.workspace>>
+          command: bash scripts/run_inspec_integration_tests.sh << parameters.workspace >>
 
 jobs:
 
@@ -91,7 +91,7 @@ jobs:
       template-file:
         description: Custom CircleCI template file to use for pipeline generation
         type: string
-        default: "."
+        default: ""
       multi-config:
         description: Name of the multi-environment definition/configuration file to use
         type: string
@@ -110,7 +110,7 @@ jobs:
           name: generate continuation pipeline
           command: |
             op read op://empc-lab/psk-platform-global-env-values/control-plane-deployment | base64 -d > environments/multi.json
-            circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >>
+            circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> <<#parameters.template-file>>--template << parameters.template-file >><</parameters.template-file>>
       - save_cache:
           name: persist generated circlecigen tfvars between workflows
           key: circlecigen-tfvars-$CIRCLE-SHA1
@@ -119,31 +119,27 @@ jobs:
       - continuation/continue:
           configuration_path: .circleci/generated_config.yml
 
-  # integration-tests:
-  #   description: Recurring job to run pipeline integration tests and detect aws configuration drift
-  #   docker:
-  #     - image: << pipeline.parameters.executor-image >>
-  #       auth:
-  #         username: $DOCKER_LOGIN
-  #         password: $DOCKER_PASSWORD
-  #   parameters:
-  #     instance_name:
-  #       description: the VPC instance to run tests against
-  #       type: string
-  #     teller_filename:
-  #       description: the teller filename to use for setting credentials
-  #       type: string
-  #     workspace:
-  #       description: the VPC instance to run tests against
-  #       type: string
-  #   steps:
-  #     - checkout
-  #     - set-environment:
-  #         instance_name: << parameters.instance_name >>
-  #         teller_filename: << parameters.teller_filename >>
-  #         pipeline-name: << pipeline.parameters.continuation-params >>
-  #     - run-inspec-tests:
-  #         workspace: << parameters.workspace >>
+  integration-tests:
+    description: Recurring job to run pipeline integration tests and detect aws configuration drift
+    docker:
+      - image: *executor-image
+    parameters:
+      instance_name:
+        description: the VPC instance to run tests against
+        type: string
+      account_env:
+        description: the op filename to use for setting credentials
+        type: string
+      workspace:
+        description: the VPC instance to run tests against
+        type: string
+    steps:
+      - checkout
+      - set-environment:
+          instance_name: << parameters.instance_name >>
+          account_env: << parameters.account_env>>
+      - run-inspec-tests:
+          workspace: << parameters.workspace >>
 
 workflows:
   version: 2
@@ -176,22 +172,21 @@ workflows:
             - static analysis of psk-aws-platform-vpc terraform
           filters: *on-push-main
 
-
-  #     - pipeline-events/schedule-pipeline:
-  #         before-release:
-  #           - secret/configure-teller:
-  #               teller-filename: .teller-sandbox.yml
-  #         name: Deploy sandbox nightly schedule
-  #         scheduled-pipeline-name: nightly vpc validation - sandbox
-  #         shell: << pipeline.parameters.shell-options >>
-  #         context: << pipeline.parameters.context >>
-  #         executor-image-name: << pipeline.parameters.executor-image >>
-  #         scheduled-pipeline-description: |
-  #           Automatically triggers nightly run of main pipeline for validating vpcs in sandbox
-  #         hours-of-day: "[5]"
-  #         per-hour: 1
-  #         days-of-week: "[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]"
-  #         filters: *on-push-main
+      - pipeline-events/schedule-pipeline:
+          before-release:
+            - set-environment: 
+                account-env: nonprod
+          name: Deploy sandbox nightly schedule
+          scheduled-pipeline-name: nightly-sandbox-validation-schedule
+          shell: *shell
+          context: *context
+          executor-image-name: *executor-image
+          scheduled-pipeline-description: |
+            Automatically triggers nightly run of main pipeline for validating sandbox deployment pipeline vpcs
+          hours-of-day: "[5]"
+          per-hour: 1
+          days-of-week: "[\"SUN\"]"
+          filters: *on-push-main
 
   #     - pipeline-events/schedule-pipeline:
   #         before-release:
@@ -223,19 +218,19 @@ workflows:
   #         multi-config: multi.json
   #         filters: *on-tag-main
 
-  # run nightly sandbox validation jobs:
-  #   when:
-  #     and:
-  #       - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-  #       - equal: [ nightly vpc validation - sandbox, << pipeline.schedule.name >> ]
-  #   jobs:
-  #     - launch-dynamic-pipeline:
-  #         name: generate-sandbox-nightly-pipeline
-  #         pipeline-name: sandbox
-  #         workflow-name: nightly-sandbox-validations
-  #         template-file: nightly.yml
-  #         multi-config: multi.json
-  #         filters: *on-push-main
+  run nightly sandbox validation jobs:
+    when:
+      and:
+        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+        - equal: [ nightly-sandbox-validation-schedule, << pipeline.schedule.name >> ]
+    jobs:
+      - launch-dynamic-pipeline:
+          name: generate-sandbox-nightly-pipeline
+          pipeline-name: sandbox
+          workflow-name: nightly-sandbox-validation
+          template-file: nightly.yml
+          multi-config: multi.json
+          filters: *on-push-main
 
   # run nightly release validation jobs:
   #   when:

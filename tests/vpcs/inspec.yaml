@@ -1,0 +1,11 @@
+name: vpcs
+title: AWS InSpec Profile for platform VPCs
+maintainer: ThoughtWorks EMPC NA Labs
+license: MIT
+version: 0.1.0
+inspec_version: '~> 5'
+depends:
+  - name: inspec-aws
+    url: https://github.com/inspec/inspec-aws/archive/main.tar.gz
+supports:
+  - platform: aws

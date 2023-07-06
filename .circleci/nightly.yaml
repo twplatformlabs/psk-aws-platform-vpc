@@ -1,0 +1,6 @@
+      - integration-tests:
+          name: {{instance_name}} integration test
+          context: *context
+          instance_name: {{instance_name}}
+          account-env: {{account_env}}
+          workspace: {{instance_name}}
