@@ -63,7 +63,7 @@ commands:
                   - circlecigen-tfvars-$CIRCLE-SHA1
             - run:
                 name: set << parameters.instance-name >> environment variables
-                command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.tfvars.json
+                command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.auto.tfvars.json
 
   run-inspec-tests:
     description: run aws inpec tests

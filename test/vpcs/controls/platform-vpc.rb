@@ -1,8 +1,10 @@
-title "Platform VPCs"
+# frozen_string_literal: true
+
+title 'EMPC Labs - PSK Platform VPCs'
 
 require 'json'
 
-tfvars = JSON.parse(File.read('./' + ENV['WORKSPACE'] + '.tfvars.json'))
+tfvars = JSON.parse(File.read('./' + ENV['WORKSPACE'] + '.auto.tfvars.json'))
 client = Aws::EC2::Client.new(region: tfvars['aws_region'])
 
 vpc = client.describe_vpcs({

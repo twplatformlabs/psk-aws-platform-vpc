@@ -5,7 +5,7 @@
           executor-image: *executor-image
           static-analysis: false
           workspace: {{instance_name}}
-          var-file: {{instance_name}}.tfvars.json
+          #var-file: {{instance_name}}.tfvars.json
           tfc-local-execution-mode: true
           tfc-organization: twdps
           tfc-workspace-name: psk-aws-platform-vpc-{{instance_name}}
