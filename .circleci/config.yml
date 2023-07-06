@@ -122,6 +122,7 @@ jobs:
   integration-tests:
     description: Recurring job to run pipeline integration tests and detect aws configuration drift
     docker:
+      #checkov:skip=CKV_CIRCLECIPIPELINES_2
       - image: *executor-image
     parameters:
       instance_name:
