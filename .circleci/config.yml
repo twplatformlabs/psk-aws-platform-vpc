@@ -13,7 +13,6 @@ orbs:
 
 globals:
   - &context empc-lab
-  #checkov:skip=CKV_CIRCLECIPIPELINES_2
   - &executor-image twdps/circleci-infra-aws:alpine-stable
   - &shell op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
   - &snyk-organization twdps
@@ -123,6 +122,7 @@ jobs:
   integration-tests:
     description: Recurring job to run pipeline integration tests and detect aws configuration drift
     docker:
+      #checkov:skip=CKV_CIRCLECIPIPELINES_2
       - image: *executor-image
     parameters:
       instance_name:
