@@ -144,7 +144,7 @@ jobs:
 workflows:
   version: 2
 
-  deploy sandbox pipeline:
+  development build:
     when:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
@@ -167,7 +167,7 @@ workflows:
           name: generate sandbox pipeline
           context: *context
           pipeline-name: sandbox
-          workflow-name: sandbox-deployment
+          workflow-name: sandbox deployment
           multi-config: multi.json
           requires:
             - static analysis of psk-aws-platform-vpc terraform
@@ -206,7 +206,7 @@ workflows:
 
 
 
-  # deploy release pipeline:
+  # production release:
   #   when:
   #     not:
   #       equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
