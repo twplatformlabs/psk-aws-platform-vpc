@@ -36,8 +36,8 @@ commands:
   set-environment:
     description: generate environment credentials and configuration from templates
     parameters:
-      static: 
-        description: set-environment for static-analysis only run 
+      static:
+        description: set-environment for static-analysis only run
         type: boolean
         default: false
       account-env:
@@ -158,9 +158,9 @@ workflows:
           snyk-additional-args: --severity-threshold=high
           checkov-additional-args: --skip-check CKV_CIRCLECIPIPELINES_2
           before-static-analysis:
-            - set-environment: 
+            - set-environment:
                 static: true
-                account-env: nonprod 
+                account-env: nonprod
           filters: *on-push-main
 
       - launch-dynamic-pipeline:
@@ -175,11 +175,11 @@ workflows:
 
       - do/schedule-pipeline:
           before-release:
-            - set-environment: 
-                static: true 
+            - set-environment:
+                static: true
                 account-env: nonprod
           name: Deploy sandbox nightly schedule
-          scheduled-pipeline-name: Nightly VPC validation - sandbox 
+          scheduled-pipeline-name: Nightly VPC validation - sandbox
           shell: *shell
           context: *context
           executor-image-name: *executor-image
@@ -191,8 +191,8 @@ workflows:
 
       - do/schedule-pipeline:
           before-release:
-            - set-environment: 
-                static: true 
+            - set-environment:
+                static: true
                 account-env: prod
           name: Deploy release nightly schedule
           scheduled-pipeline-name: Nightly VPC validation - release
@@ -213,6 +213,7 @@ workflows:
     jobs:
       - launch-dynamic-pipeline:
           name: generate release pipeline
+          context: *context
           pipeline-name: release
           workflow-name: release-deployment
           multi-config: multi.json
