@@ -13,6 +13,7 @@ orbs:
 
 globals:
   - &context empc-lab
+  #checkov:skip=CKV_CIRCLECIPIPELINES_2
   - &executor-image twdps/circleci-infra-aws:alpine-stable
   - &shell op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
   - &snyk-organization twdps
@@ -175,6 +176,7 @@ workflows:
       - do/schedule-pipeline:
           before-release:
             - set-environment: 
+                static: true 
                 account-env: nonprod
           name: Deploy sandbox nightly schedule
           scheduled-pipeline-name: nightly-sandbox-validation-schedule
