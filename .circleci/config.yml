@@ -179,7 +179,7 @@ workflows:
                 static: true 
                 account-env: nonprod
           name: Deploy sandbox nightly schedule
-          scheduled-pipeline-name: nightly-sandbox-validation-schedule
+          scheduled-pipeline-name: Nightly VPC validation - sandbox 
           shell: *shell
           context: *context
           executor-image-name: *executor-image
@@ -195,7 +195,7 @@ workflows:
                 static: true 
                 account-env: prod
           name: Deploy release nightly schedule
-          scheduled-pipeline-name: nightly vpc validation - release
+          scheduled-pipeline-name: Nightly VPC validation - release
           shell: *shell
           context: *context
           executor-image-name: *executor-image
