@@ -167,7 +167,7 @@ workflows:
           name: generate sandbox pipeline
           context: *context
           pipeline-name: sandbox
-          workflow-name: sandbox deployment
+          workflow-name: sandbox-deployment
           multi-config: multi.json
           requires:
             - static analysis of psk-aws-platform-vpc terraform
@@ -214,7 +214,7 @@ workflows:
       - launch-dynamic-pipeline:
           name: generate release pipeline
           pipeline-name: release
-          workflow-name: release deployment
+          workflow-name: release-deployment
           multi-config: multi.json
           filters: *on-tag-main
 
