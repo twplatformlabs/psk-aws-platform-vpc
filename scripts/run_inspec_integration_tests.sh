@@ -14,6 +14,6 @@ aws sts assume-role \
 export AWS_ACCESS_KEY_ID=$(jq -r ".Credentials.AccessKeyId" < credentials)
 export AWS_SECRET_ACCESS_KEY=$(jq -r ".Credentials.SecretAccessKey" < credentials)
 export AWS_SESSION_TOKEN=$(jq -r ".Credentials.SessionToken" < credentials)
-export AWS_DEFAULT_REGION=$(jq -r .aws_region < "${ENVIRONMENT}".auto.tfvars.json)
+export AWS_DEFAULT_REGION=$(jq -r .aws_region < "${ENVIRONMENT}".tfvars.json)
 
 inspec exec test/vpcs -t aws://
