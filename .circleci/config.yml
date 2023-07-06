@@ -172,7 +172,7 @@ workflows:
             - static analysis of psk-aws-platform-vpc terraform
           filters: *on-push-main
 
-      - pipeline-events/schedule-pipeline:
+      - do/schedule-pipeline:
           before-release:
             - set-environment: 
                 account-env: nonprod
