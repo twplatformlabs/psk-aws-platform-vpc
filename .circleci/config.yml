@@ -122,7 +122,6 @@ jobs:
   integration-tests:
     description: Recurring job to run pipeline integration tests and detect aws configuration drift
     docker:
-      #checkov:skip=CKV_CIRCLECIPIPELINES_2
       - image: *executor-image
     parameters:
       instance_name:
@@ -157,6 +156,7 @@ workflows:
           shell: *shell
           snyk-organization: *snyk-organization
           snyk-additional-args: --severity-threshold=high
+          checkov-additional-args: --skip-check CKV_CIRCLECIPIPELINES_2
           before-static-analysis:
             - set-environment: 
                 static: true
