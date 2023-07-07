@@ -11,6 +11,7 @@ While the PSK lab only makes use of two vpc, a typical multi-region Engineering 
 
 ## reservations
 
+
 | vpc                     | region          | az                | az                | az                |
 |-------------------------|:---------------:|:-----------------:|:-----------------:|:-----------------:|
 |                         |                 |                   |                   |                   |
