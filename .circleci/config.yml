@@ -60,7 +60,7 @@ commands:
             - restore_cache:
                 name: restore circlecigen generated tfvars
                 keys:
-                  - circlecigen-tfvars-$CIRCLE-SHA1
+                  - circlecigen-tfvars-{{ .Revision }}
             - run:
                 name: set << parameters.instance-name >> environment variables
                 command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.auto.tfvars.json
@@ -113,7 +113,7 @@ jobs:
             circlecigen << parameters.pipeline-name >> --workflow << parameters.workflow-name >> <<#parameters.template-file>>--template << parameters.template-file >><</parameters.template-file>>
       - save_cache:
           name: persist generated circlecigen tfvars between workflows
-          key: circlecigen-tfvars-$CIRCLE-SHA1
+          key: circlecigen-tfvars-{{ .Revision }}
           paths:
             - environments/
       - continuation/continue:
