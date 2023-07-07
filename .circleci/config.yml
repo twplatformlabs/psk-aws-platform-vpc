@@ -153,7 +153,7 @@ workflows:
           name: static analysis of psk-aws-platform-vpc terraform
           context: *context
           executor-image: *executor-image
-          shell: *shell
+          shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           snyk-organization: *snyk-organization
           snyk-additional-args: --severity-threshold=high
           checkov-additional-args: --skip-check CKV_CIRCLECIPIPELINES_2
@@ -180,7 +180,7 @@ workflows:
                 account-env: nonprod
           name: Deploy sandbox nightly schedule
           scheduled-pipeline-name: Nightly VPC validation - sandbox
-          shell: *shell
+          shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           context: *context
           executor-image-name: *executor-image
           scheduled-pipeline-description: |
@@ -196,7 +196,7 @@ workflows:
                 account-env: prod
           name: Deploy release nightly schedule
           scheduled-pipeline-name: Nightly VPC validation - release
-          shell: *shell
+          shell: op run --env-file op.prod.env -- /bin/bash -eo pipefail
           context: *context
           executor-image-name: *executor-image
           scheduled-pipeline-description: |

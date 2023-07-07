@@ -1,7 +1,7 @@
       - terraform/apply:
           name: apply {{instance_name}} change plan
           context: *context
-          shell: *shell
+          shell: op run --env-file op.{{account_env}}.env -- /bin/bash -eo pipefail
           workspace: {{instance_name}}
           before-terraform:
             - set-environment:
