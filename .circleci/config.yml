@@ -170,12 +170,12 @@ workflows:
           name: Deploy sandbox nightly schedule
           context: *context
           executor-image-name: *executor-image
+          shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           scheduled-pipeline-name: Nightly VPC validation - sandbox
           scheduled-pipeline-description: |
             Automatically triggers nightly run of main pipeline for validating sandbox deployment pipeline vpcs
           hours-of-day: "[1]"
           days-of-week: "[\"SUN\"]"
-          #shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           before-release:
             - set-environment:
                 static: true
@@ -186,12 +186,12 @@ workflows:
           name: Deploy release nightly schedule
           context: *context
           executor-image-name: *executor-image
+          shell: op run --env-file op.prod.env -- /bin/bash -eo pipefail
           scheduled-pipeline-name: Nightly VPC validation - release
           scheduled-pipeline-description: |
             Automatically triggers nightly run of main pipeline for validating vpcs in release
           hours-of-day: "[1]"
           days-of-week: "[\"SUN\"]"
-          # shell: op run --env-file op.prod.env -- /bin/bash -eo pipefail
           before-release:
             - set-environment:
                 static: true
