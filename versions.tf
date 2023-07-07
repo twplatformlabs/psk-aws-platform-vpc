@@ -17,7 +17,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = var.aws_region
+  region = var.aws_region
   assume_role {
     role_arn     = "arn:aws:iam::${var.aws_account_id}:role/${var.aws_assume_role}"
     session_name = "psk-aws-platform-vpc-${var.instance_name}"
@@ -25,9 +25,9 @@ provider "aws" {
 
   default_tags {
     tags = {
-      env      = var.instance_name
-      cluster  = var.instance_name
-      pipeline = "psk-aws-platform-vpc"
+      env                                          = var.instance_name
+      cluster                                      = var.instance_name
+      pipeline                                     = "psk-aws-platform-vpc"
       "kubernetes.io/cluster/${var.instance_name}" = "shared"
     }
   }

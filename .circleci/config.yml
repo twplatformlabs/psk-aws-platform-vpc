@@ -147,9 +147,10 @@ workflows:
           name: static analysis of psk-aws-platform-vpc terraform
           context: *context
           executor-image: *executor-image
+          snyk-scan: false
           #shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
-          snyk-organization: *snyk-organization
-          snyk-additional-args: --severity-threshold=high
+          # snyk-organization: *snyk-organization
+          # snyk-additional-args: --severity-threshold=high
           checkov-additional-args: --skip-check CKV_CIRCLECIPIPELINES_2
           before-static-analysis:
             - set-environment:

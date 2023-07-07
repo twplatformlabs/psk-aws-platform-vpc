@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "5.0.0"
 
   name = "${var.instance_name}-vpc"
@@ -9,35 +9,35 @@ module "vpc" {
   # private, node subnet
   private_subnets       = var.vpc_private_subnets
   private_subnet_suffix = "private-subnet"
-  private_subnet_tags   = {
+  private_subnet_tags = {
     "kubernetes.io/cluster/${var.instance_name}" = "shared"
-    "Tier" = "node"
+    "Tier"                                       = "node"
   }
 
   # public ingress subnet
   public_subnets       = var.vpc_public_subnets
   public_subnet_suffix = "public-subnet"
-  public_subnet_tags   = {
+  public_subnet_tags = {
     "kubernetes.io/cluster/${var.instance_name}" = "shared"
-    "kubernetes.io/role/elb"                      = "1"
-    "Tier" = "public"
+    "kubernetes.io/role/elb"                     = "1"
+    "Tier"                                       = "public"
   }
 
   database_subnets       = var.vpc_database_subnets
   database_subnet_suffix = "database-subnet"
-  database_subnet_tags   = {
+  database_subnet_tags = {
     "Tier" = "database"
   }
 
-  create_database_subnet_group = true
+  create_database_subnet_group    = true
   create_elasticache_subnet_group = false
-  create_redshift_subnet_group = false
+  create_redshift_subnet_group    = false
 
   map_public_ip_on_launch = false
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  enable_nat_gateway = true
-  single_nat_gateway = true
+  enable_dns_hostnames    = true
+  enable_dns_support      = true
+  enable_nat_gateway      = true
+  single_nat_gateway      = true
 
   # Cloudwatch log group and IAM role will be created
   # enable_flow_log                      = true
@@ -49,3 +49,46 @@ module "vpc" {
   #   Name = "vpc-flow-logs-cloudwatch-logs-default"
   # }
 }
+
+
+
+# if you implement a multi-region EP networking pattern using AWS Cloud WAN
+# The below example assumes automatic cross segment routing only for the intra subnet
+# when it is used as an internal ingress network for a cluster (typically also on a secondary CIDR)
+#
+# data "terraform_remote_state" "wan" {
+#   backend = "remote"
+#
+#   config = {
+#     "organization" : "rba",
+#     "workspaces" : {
+#       "name" : "psk-aws-platform-wan-${var.infra_env}"
+#     }
+#   }
+# }
+
+# resource "aws_networkmanager_vpc_attachment" "cwan" {
+#   core_network_id = data.terraform_remote_state.wan.outputs.core_network_id
+#   subnet_arns     = module.segment_region_vpc.intra_subnet_arns
+#   vpc_arn         = module.segment_region_vpc.vpc_arn
+#
+#   tags = {
+#     "Tier"    = "intra"
+#     "segment" = var.segment
+#   }
+# }
+
+# resource "aws_route" "public_to_cwan" {
+#   core_network_arn       = data.terraform_remote_state.wan.outputs.core_network_arn
+#   destination_cidr_block = "10.0.0.0/8"
+#   route_table_id         = module.segment_region_vpc.public_route_table_ids[0]
+#   depends_on             = [aws_networkmanager_vpc_attachment.cwan]
+# }
+
+# resource "aws_route" "private_to_cwan" {
+#   count                  = length(var.vpc_azs)
+#   core_network_arn       = data.terraform_remote_state.wan.outputs.core_network_arn
+#   destination_cidr_block = "10.0.0.0/8"
+#   route_table_id         = module.segment_region_vpc.private_route_table_ids[count.index]
+#   depends_on             = [aws_networkmanager_vpc_attachment.cwan]
+# }
