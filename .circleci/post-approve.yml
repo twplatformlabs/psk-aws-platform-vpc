@@ -1,15 +1,15 @@
       - terraform/apply:
           name: apply {{instance_name}} change plan
           context: *context
-          shell: op run --env-file op.{{account_env}}.env -- /bin/bash -eo pipefail
+          # shell: op run --env-file op.{{env_credentials}}.env -- /bin/bash -eo pipefail
           workspace: {{instance_name}}
           before-terraform:
             - set-environment:
-                account-env: {{account_env}}
                 instance-name: {{instance_name}}
+                env-credentials: {{env_credentials}}
           after-terraform:
             - run-inspec-tests:
-                workspace: {{instance_name}}
+                instance-name: {{instance_name}}
           filters: {{filters}}
           requires:
             - approve {{role}} changes
