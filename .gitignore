@@ -8,3 +8,4 @@ environments/*.tfvars*
 multi.json
 .circleci/generated_config.yml
 .terraform*
+kubeconfig
