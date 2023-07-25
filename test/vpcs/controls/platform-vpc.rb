@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-title 'EMPC Labs - PSK Platform VPCs'
+title 'PSK Platform VPCs'
 
 require 'json'
 

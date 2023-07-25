@@ -208,12 +208,11 @@ workflows:
           release-pipeline-name: release
           filters: *on-tag-main
 
-
   run nightly sandbox validation jobs:
     when:
       and:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ nightly-sandbox-validation-schedule, << pipeline.schedule.name >> ]
+        - equal: [ Nightly VPC validation - sandbox, << pipeline.schedule.name >> ]
     jobs:
       - launch-dynamic-pipeline:
           name: generate-sandbox-nightly-pipeline
@@ -225,7 +224,7 @@ workflows:
     when:
       and:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ nightly-release-validation-schedule, << pipeline.schedule.name >> ]
+        - equal: [ Nightly VPC validation - release, << pipeline.schedule.name >> ]
     jobs:
       - launch-dynamic-pipeline:
           name: generate-platform-nightly-pipeline
