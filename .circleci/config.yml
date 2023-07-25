@@ -202,10 +202,6 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
-      - do/release: 
-          on-tag: true
-          slack-message: psk-aws-platform-vpc prod release
-          slack-webhook-url: $LAB_EVENTS_CHANNEL_WEBHOOK
       - launch-dynamic-pipeline:
           name: generate release pipeline
           context: *context
