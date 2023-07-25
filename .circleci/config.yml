@@ -169,7 +169,7 @@ workflows:
           context: *context
           executor-image-name: *executor-image
           shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
-          scheduled-pipeline-name: Nightly VPC validation - sandbox
+          scheduled-pipeline-name: Weekly VPC validation - sandbox
           scheduled-pipeline-description: |
             Automatically triggers nightly run of main pipeline for validating sandbox deployment pipeline vpcs
           hours-of-day: "[1]"
@@ -185,7 +185,7 @@ workflows:
           context: *context
           executor-image-name: *executor-image
           shell: op run --env-file op.prod.env -- /bin/bash -eo pipefail
-          scheduled-pipeline-name: Nightly VPC validation - release
+          scheduled-pipeline-name: Weekly VPC validation - release
           scheduled-pipeline-description: |
             Automatically triggers nightly run of main pipeline for validating vpcs in release
           hours-of-day: "[1]"
@@ -212,7 +212,7 @@ workflows:
     when:
       and:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ Nightly VPC validation - sandbox, << pipeline.schedule.name >> ]
+        - equal: [ Weekly VPC validation - sandbox, << pipeline.schedule.name >> ]
     jobs:
       - launch-dynamic-pipeline:
           name: generate-sandbox-nightly-pipeline
@@ -220,14 +220,14 @@ workflows:
           custom-template-file: nightly.yml
           filters: *on-push-main
 
-  run nightly release validation jobs:
+  run weekly release validation jobs:
     when:
       and:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ Nightly VPC validation - release, << pipeline.schedule.name >> ]
+        - equal: [ Weekly VPC validation - release, << pipeline.schedule.name >> ]
     jobs:
       - launch-dynamic-pipeline:
-          name: generate-platform-nightly-pipeline
+          name: generate platform weekly test pipeline
           release-pipeline-name: release
-          custom-template-file: nightly.yml
+          custom-template-file: recurring.yml
           filters: *on-push-main
