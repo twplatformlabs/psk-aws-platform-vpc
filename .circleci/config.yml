@@ -9,7 +9,7 @@ orbs:
   #checkov:skip=CKV_CIRCLECIPIPELINES_3
   terraform: twdps/terraform@0.15.0
   op: twdps/onepassword@1.0.0
-  do: twdps/pipeline-events@dev:latest
+  do: twdps/pipeline-events@2.0.0
 
 globals:
   - &context empc-lab
