@@ -208,17 +208,6 @@ workflows:
           release-pipeline-name: release
           filters: *on-tag-main
 
-  production release notes:
-    when:
-      not:
-        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-    jobs:
-      - do/release: 
-          name: generate github release notes for production changes
-          on-tag: true
-          slack-message: psk-aws-platform-vpc production release
-          slack-webhook-url: $LAB_EVENTS_CHANNEL_WEBHOOK
-
   run nightly sandbox validation jobs:
     when:
       and:
