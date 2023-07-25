@@ -9,7 +9,7 @@ orbs:
   #checkov:skip=CKV_CIRCLECIPIPELINES_3
   terraform: twdps/terraform@dev:latest
   op: twdps/onepassword@1.0.0
-  do: twdps/pipeline-events@2.0.0
+  do: twdps/pipeline-events@dev:latest
 
 globals:
   - &context empc-lab
@@ -202,6 +202,10 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
+      - do/release: 
+          on-tag: true
+          slack-message: psk-aws-platform-vpc prod release
+          slack-webhook-url: $LAB_EVENTS_CHANNEL_WEBHOOK
       - launch-dynamic-pipeline:
           name: generate release pipeline
           context: *context
