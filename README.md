@@ -28,5 +28,4 @@ Also, note that having multiple cluster in multiple regions as part of the same 
 | public  				        |                 | 10.90.240.0/26    | 10.90.240.64/26   | 10.90.240.128/26  |
 | database                |                 | 10.90.192.0/20    | 10.90.208.0/20    | 10.90.224.0/20    |
 
-
 Maintainer notes found [here](doc/maintainer_notes.md).
