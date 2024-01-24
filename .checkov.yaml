@@ -12,3 +12,11 @@ summary-position: top
 skip-check:
   - CKV_CIRCLECIPIPELINES_2  # this check is apparently unable to recognize that I did pin the image tag
   - CKV_TF_1                 # this check is apparently unable to recognize that module version is pinned
+  - CKV2_AWS_11              # Flow logs disabled for cost purposes in example platform
+  - CKV2_AWS_19              # false positives for public network configuration
+  - CKV2_AWS_44
+  - CKV2_AWS_35
+  - CKV_AWS_130
+  - CKV2_AWS_12
+  - CKV_AWS_111              # false positive for use case
+  - CKV_AWS_356

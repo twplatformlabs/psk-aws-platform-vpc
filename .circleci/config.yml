@@ -113,6 +113,8 @@ workflows:
           before-plan:
             - set-environment:
                 cluster: sbx-i01-aws-us-east-1
+          requires:
+            - static code analysis
           filters: *on-push-main
 
       - approve sbx-i01-aws-us-east-1 changes:
