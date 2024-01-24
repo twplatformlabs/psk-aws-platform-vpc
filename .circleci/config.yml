@@ -166,7 +166,7 @@ workflows:
                 cluster: prod-i01-aws-us-east-2
           after-apply:
             - aws-integration-tests:
-                account: prod-i01-aws-us-east-2
+                cluster: prod-i01-aws-us-east-2
             - do/slack-bot:
                 channel: lab-events
                 message: Release psk-aws-platform-vpc
