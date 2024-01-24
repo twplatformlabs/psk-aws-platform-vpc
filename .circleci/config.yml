@@ -188,6 +188,9 @@ workflows:
             Weekly, automated run of platform vpc integration tests
           hours-of-day: "[1]"
           days-of-week: "[\"SUN\"]"
+          before-schedule:
+            - op/env:
+                env-file: op.prod-i01-aws-us-east-2.env
           filters: *on-push-main
 
   weekly integration test:
