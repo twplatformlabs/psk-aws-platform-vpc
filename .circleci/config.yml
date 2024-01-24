@@ -5,7 +5,7 @@ orbs:
   #checkov:skip=CKV_CIRCLECIPIPELINES_3
   terraform: twdps/terraform@2.0.4
   op: twdps/onepassword@2.0.6
-  do: twdps/pipeline-events@3.2.1
+  do: twdps/pipeline-events@dev:alpha
 
 # ============================================================ pipeline globals
 
@@ -113,13 +113,12 @@ workflows:
           before-plan:
             - set-environment:
                 cluster: sbx-i01-aws-us-east-1
-          requires:
-            - static code analysis
           filters: *on-push-main
 
       - approve sbx-i01-aws-us-east-1 changes:
           type: approval
           requires:
+            - static code analysis
             - sbx-i01-aws-us-east-1 change plan
           filters: *on-push-main
 
@@ -186,7 +185,7 @@ workflows:
           shell: op run --env-file op.prod-i01-aws-us-east-2.env -- /bin/bash -eo pipefail
           scheduled-pipeline-name: weekly-integration-test
           scheduled-pipeline-description: |
-            Weekly, automated run of platform vpc integration tests.
+            Weekly, automated run of platform vpc integration tests
           hours-of-day: "[1]"
           days-of-week: "[\"SUN\"]"
           filters: *on-tag-main
