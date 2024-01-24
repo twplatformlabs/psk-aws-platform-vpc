@@ -4,8 +4,5 @@
 requirements*
 source.env
 *.auto.tfvars.json
-environments/*.tfvars*
-multi.json
-.circleci/generated_config.yml
 .terraform*
 kubeconfig

@@ -16,7 +16,7 @@ variable "aws_account_id" {
 
 variable "aws_assume_role" { type = string }
 
-variable "instance_name" {
+variable "cluster_name" {
   description = "cluster instance name"
   type        = string
 }

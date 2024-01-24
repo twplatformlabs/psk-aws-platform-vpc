@@ -7,7 +7,7 @@
 	</p>
 </div>
 
-While the PSK lab only makes use of two vpcs, a typical multi-region Engineering Platform would have many more. At which point the need arises to generate a deployment pipeline in an automated manner rather than manually maintain. This pipeline introduces the tool [circlecigen](https://github.com/ThoughtWorks-DPS/circlecigen) which demonstrates a python approach to managing what will increasing become a dynamic range of engineering platform components within circleci and terraform.  
+While the PSK lab only makes use of two vpcs, a typical multi-region Engineering Platform would have many more.
 
 Also, note that having multiple cluster in multiple regions as part of the same role requires a more complex network configuration. For cost purposes, our live lab environment does not make use of either multi-region clusters nor networks. See the ps-aws-platform-wan repo and inline comments in this repo for examples of such a configuration.  
 

@@ -1,20 +1,17 @@
+---
 version: 2.1
 
-setup: true  # uses continuation-orb, generated pipelines
-
-# =================== global config
-
 orbs:
-  continuation: circleci/continuation@0.4.0
   #checkov:skip=CKV_CIRCLECIPIPELINES_3
-  terraform: twdps/terraform@0.15.0
-  op: twdps/onepassword@1.0.0
-  do: twdps/pipeline-events@2.0.0
+  terraform: twdps/terraform@2.0.4
+  op: twdps/onepassword@2.0.6
+  do: twdps/pipeline-events@3.2.1
+
+# ============================================================ pipeline globals
 
 globals:
   - &context empc-lab
-  - &executor-image twdps/circleci-infra-aws:alpine-4.15.0
-  - &snyk-organization twdps
+  - &executor-image twdps/circleci-infra-aws:alpine-5.1.0
 
 on-push-main: &on-push-main
   branches:
@@ -28,206 +25,179 @@ on-tag-main: &on-tag-main
   tags:
     only: /.*/
 
-# ===================================
+# ============================================================ commands and jobs
 
 commands:
 
   set-environment:
-    description: set environment variables or create credential files from templates
+    description: generate environment credentials and configuration from templates
     parameters:
-      static:
-        description: set-environment for static-analysis-only run
-        type: boolean
-        default: false
-      env-credentials:
-        description: identifier for op.*.env file
+      cluster:
+        description: cluster to be configured
         type: string
-      instance-name:
-        description: cluster role instance and tf workspace name
-        type: string
-        default: ""
-      release-pipeline-name:
-        description: name of the release pipeline to generate from multi-regional release, global json file (not needed for static=true)
-        type: string
-        default: ""
     steps:
       - op/env:
-          env-file: op.<< parameters.env-credentials >>.env
+          env-file: op.<< parameters.cluster >>.env
       - run:
           name: set ~/.terraformrc
           command: op inject -i tpl/terraformrc.tpl -o ~/.terraformrc
-      - unless:
-          condition: << parameters.static >>
-          steps:
-            - restore_cache:
-                name: restore circlecigen generated tfvars
-                keys:
-                  - circlecigen-tfvars-{{ .Revision }}-<< parameters.release-pipeline-name >>
-            - run:
-                name: set << parameters.instance-name >> role instance environment settings (tfvars)
-                command: op inject -i environments/<< parameters.instance-name >>.tfvars.json -o << parameters.instance-name >>.auto.tfvars.json
+      - run:
+          name: set << parameters.cluster >> environment variables
+          command: op inject -i environments/<< parameters.cluster >>.auto.tfvars.json.tpl -o << parameters.cluster >>.auto.tfvars.json
 
-  run-inspec-tests:
-    description: run inspec aws configuration tests
+  aws-integration-tests:
+    description: run awspec aws configuration tests
     parameters:
-      instance-name:
+      cluster:
         description: tf workspace name
         type: string
     steps:
       - run:
-          name: run inspec tests
+          name: run awspec aws configuration tests
           environment:
-            WORKSPACE: <<parameters.instance-name>>
-          command: bash scripts/run_inspec_integration_tests.sh << parameters.instance-name >>
+            WORKSPACE: <<parameters.cluster>>
+          command: bash scripts/run_awspec_integration_tests.sh << parameters.cluster >>
 
 jobs:
 
-  launch-dynamic-pipeline:
+  recurring-integration-tests:
+    description: |
+      Recurring job (weekly) to run pipeline integration tests to detect aws configuration drift
+    docker:
+      - image: *executor-image
+    environment:
+      TF_WORKSPACE: << parameters.cluster >>
+    shell: op run --env-file op.<< parameters.cluster >>.env -- /bin/sh -eo pipefail
     parameters:
-      release-pipeline-name:
-        description: name of the release pipeline generated from multi-regional release
+      cluster:
+        description: nonprod or production cluster configuration
         type: string
-      custom-template-file:
-        description: Custom CircleCI template file to use for pipeline generation
-        type: string
-        default: ""
-    executor: continuation/default
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: install needed packages
-          command: |
-            sudo apt-get update && sudo apt-get install python3-pip && pip install circlecigen==0.0.9
-            curl -L https://cache.agilebits.com/dist/1P/op2/pkg/v2.18.0-beta.01/op_linux_amd64_v2.18.0-beta.01.zip -o op.zip
-            unzip -o op.zip && sudo mv op /usr/local/bin/op
-      - run:
-          name: generate continuation pipeline
-          command: |
-            op read op://empc-lab/psk-platform-global-env-values/control-plane-deployment | base64 -d > environments/multi.json
-            circlecigen << parameters.release-pipeline-name >> \
-                        --workflow << parameters.release-pipeline-name >>-deployment \
-                        <<#parameters.custom-template-file>>--template << parameters.custom-template-file >><</parameters.custom-template-file>>
-      - save_cache:
-          name: persist circlecigen generated files between workflows
-          key: circlecigen-tfvars-{{ .Revision }}-<< parameters.release-pipeline-name >>
-          paths:
-            - environments/
-      - continuation/continue:
-          configuration_path: .circleci/generated_config.yml
-
-  integration-tests:
-    description: Recurring job to run pipeline integration tests and detect aws configuration drift
-    docker:
-      - image: *executor-image
-    parameters:
-      instance_name:
-        description: the VPC instance (and tfcloud workspace name) to run tests against
-        type: string
-      env-credentials:
-        description: identifier for op.*.env file
-        type: string
-    steps:
-      - checkout
       - set-environment:
-          instance_name: << parameters.instance_name >>
-          env-credentials: << parameters.env-credentials >>
-      - run-inspec-tests:
-          instance-name: << parameters.instance_name >>
+          cluster: << parameters.cluster >>
+      - aws-integration-tests:
+          cluster: << parameters.cluster >>
+
+# ============================================================ workflows
 
 workflows:
-  version: 2
 
-  development build:
+  deploy sbx-i01-aws-us-east-1 vpc:
     when:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - terraform/static-analysis:
-          name: static analysis of psk-aws-platform-vpc terraform
+          name: static code analysis
           context: *context
+          shell: op run --env-file op.sbx-i01-aws-us-east-1.env -- /bin/bash -eo pipefail
           executor-image: *executor-image
-          snyk-scan: false
-          shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
-          checkov-additional-args: --skip-check CKV_CIRCLECIPIPELINES_2
+          workspace: sbx-i01-aws-us-east-1
+          tflint-scan: true
+          tflint-provider: aws
+          trivy-scan: true
           before-static-analysis:
-            - set-environment:
-                static: true
-                env-credentials: nonprod
+            - op/env:
+                env-file: op.sbx-i01-aws-us-east-1.env
           filters: *on-push-main
 
-      - launch-dynamic-pipeline:
-          name: generate sandbox pipeline
+      - terraform/plan:
+          name: sbx-i01-aws-us-east-1 change plan
           context: *context
-          release-pipeline-name: sandbox
+          shell: op run --env-file op.sbx-i01-aws-us-east-1.env -- /bin/bash -eo pipefail
+          executor-image: *executor-image
+          workspace: sbx-i01-aws-us-east-1
+          checkov-scan: true
+          before-plan:
+            - set-environment:
+                cluster: sbx-i01-aws-us-east-1
+          filters: *on-push-main
+
+      - approve sbx-i01-aws-us-east-1 changes:
+          type: approval
           requires:
-            - static analysis of psk-aws-platform-vpc terraform
+            - sbx-i01-aws-us-east-1 change plan
           filters: *on-push-main
 
-      - do/schedule-pipeline:
-          name: Deploy sandbox nightly schedule
+      - terraform/apply:
+          name: apply sbx-i01-aws-us-east-1 changes
           context: *context
-          executor-image-name: *executor-image
-          shell: op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
-          scheduled-pipeline-name: Weekly VPC validation - sandbox
-          scheduled-pipeline-description: |
-            Automatically triggers nightly run of main pipeline for validating sandbox deployment pipeline vpcs
-          hours-of-day: "[1]"
-          days-of-week: "[\"SUN\"]"
-          before-release:
+          shell: op run --env-file op.sbx-i01-aws-us-east-1.env -- /bin/bash -eo pipefail
+          workspace: sbx-i01-aws-us-east-1
+          before-apply:
             - set-environment:
-                static: true
-                env-credentials: nonprod
+                cluster: sbx-i01-aws-us-east-1
+          after-apply:
+            - aws-integration-tests:
+                cluster: sbx-i01-aws-us-east-1
+          requires:
+            - approve sbx-i01-aws-us-east-1 changes
           filters: *on-push-main
 
-      - do/schedule-pipeline:
-          name: Deploy release nightly schedule
-          context: *context
-          executor-image-name: *executor-image
-          shell: op run --env-file op.prod.env -- /bin/bash -eo pipefail
-          scheduled-pipeline-name: Weekly VPC validation - release
-          scheduled-pipeline-description: |
-            Automatically triggers nightly run of main pipeline for validating vpcs in release
-          hours-of-day: "[1]"
-          days-of-week: "[\"SUN\"]"
-          before-release:
-            - set-environment:
-                static: true
-                env-credentials: prod
-          filters: *on-push-main
-
-
-  production release:
-    when:
-      not:
-        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+  deploy prod-i01-aws-us-east-2 vpc:
     jobs:
-      - launch-dynamic-pipeline:
-          name: generate release pipeline
+      - terraform/plan:
+          name: prod-i01-aws-us-east-2 change plan
           context: *context
-          release-pipeline-name: release
+          shell: op run --env-file op.prod-i01-aws-us-east-2.env -- /bin/bash -eo pipefail
+          executor-image: *executor-image
+          workspace: prod-i01-aws-us-east-2
+          checkov-scan: true
+          before-plan:
+            - set-environment:
+                cluster: prod-i01-aws-us-east-2
           filters: *on-tag-main
 
-  run nightly sandbox validation jobs:
-    when:
-      and:
-        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ Weekly VPC validation - sandbox, << pipeline.schedule.name >> ]
-    jobs:
-      - launch-dynamic-pipeline:
-          name: generate-sandbox-nightly-pipeline
-          release-pipeline-name: sandbox
-          custom-template-file: nightly.yml
-          filters: *on-push-main
+      - approve prod-i01-aws-us-east-2 changes:
+          type: approval
+          requires:
+            - prod-i01-aws-us-east-2 change plan
+          filters: *on-tag-main
 
-  run weekly release validation jobs:
-    when:
-      and:
-        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-        - equal: [ Weekly VPC validation - release, << pipeline.schedule.name >> ]
+      - terraform/apply:
+          name: apply prod-i01-aws-us-east-2 changes
+          context: *context
+          shell: op run --env-file op.prod-i01-aws-us-east-2.env -- /bin/bash -eo pipefail
+          workspace: prod-i01-aws-us-east-2
+          before-apply:
+            - set-environment:
+                cluster: prod-i01-aws-us-east-2
+          after-apply:
+            - aws-integration-tests:
+                account: prod-i01-aws-us-east-2
+            - do/slack-bot:
+                channel: lab-events
+                message: Release psk-aws-platform-vpc
+                include-link: true
+                include-tag: true
+          requires:
+            - approve prod-i01-aws-us-east-2 changes
+          filters: *on-tag-main
+
+  schedule weekly integration test:
     jobs:
-      - launch-dynamic-pipeline:
-          name: generate platform weekly test pipeline
-          release-pipeline-name: release
-          custom-template-file: recurring.yml
-          filters: *on-push-main
+      - do/schedule-pipeline:
+          name: weekly integration test
+          context: *context
+          shell: op run --env-file op.prod-i01-aws-us-east-2.env -- /bin/bash -eo pipefail
+          scheduled-pipeline-name: weekly-integration-test
+          scheduled-pipeline-description: |
+            Weekly, automated run of platform vpc integration tests.
+          hours-of-day: "[1]"
+          days-of-week: "[\"SUN\"]"
+          filters: *on-tag-main
+
+  weekly integration test:
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+    jobs:
+      - recurring-integration-tests:
+          name: sbx-i01-aws-us-east-1 integration test
+          context: *context
+          cluster: sbx-i01-aws-us-east-1
+      - recurring-integration-tests:
+          name: prod-i01-aws-us-east-2 integration test
+          context: *context
+          cluster: prod-i01-aws-us-east-2

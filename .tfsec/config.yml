@@ -1,5 +1,0 @@
----
-exclude:
-  - aws-ec2-no-excessive-port-access              # node port access managed by control plane
-  - aws-ec2-no-public-ingress-acl                 # public ingress enabled for ingress subnet
-  - aws-ec2-require-vpc-flow-logs-for-all-vpcs    # disabled for psk labs
