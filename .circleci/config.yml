@@ -153,7 +153,6 @@ workflows:
           name: apply prod-i01-aws-us-east-2 changes
           context: *context
           workspace: prod-i01-aws-us-east-2
-          gren: true
           before-apply:
             - set-environment:
                 cluster: prod-i01-aws-us-east-2
@@ -167,6 +166,17 @@ workflows:
                 include-tag: true
           requires:
             - approve prod-i01-aws-us-east-2 changes
+          filters: *on-tag-main
+
+      - do/release:
+          name: generate release notes
+          context: *context
+          on-tag: true
+          before-release:
+            - op/env:
+                env-file: op.prod-i01-aws-us-east-2.env
+          requires:
+            - apply prod-i01-aws-us-east-2 changes
           filters: *on-tag-main
 
   schedule weekly integration test:
