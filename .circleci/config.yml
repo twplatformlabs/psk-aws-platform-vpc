@@ -37,7 +37,7 @@ commands:
           env-file: op.<< parameters.cluster >>.env
       - op/tpl:
           tpl-path: environments
-          tpl-file: << parameters.account >>.auto.tfvars.json
+          tpl-file: << parameters.cluster >>.auto.tfvars.json
       - terraform/terraformrc
       - do/bash-functions
 
