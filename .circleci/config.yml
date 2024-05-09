@@ -2,16 +2,13 @@
 version: 2.1
 
 orbs:
-  #checkov:skip=CKV_CIRCLECIPIPELINES_3
-  terraform: twdps/terraform@2.0.4
-  op: twdps/onepassword@2.0.6
-  do: twdps/pipeline-events@3.2.2
-
-# ============================================================ pipeline globals
+  terraform: twdps/terraform@3.0.0
+  op: twdps/onepassword@3.0.0
+  do: twdps/pipeline-events@4.0.0
 
 globals:
   - &context empc-lab
-  - &executor-image twdps/circleci-infra-aws:alpine-5.1.0
+  - &executor-image twdps/circleci-infra-aws:alpine-7.0.0
 
 on-push-main: &on-push-main
   branches:
@@ -38,12 +35,11 @@ commands:
     steps:
       - op/env:
           env-file: op.<< parameters.cluster >>.env
-      - run:
-          name: set ~/.terraformrc
-          command: op inject -i tpl/terraformrc.tpl -o ~/.terraformrc
-      - run:
-          name: set << parameters.cluster >> environment variables
-          command: op inject -i environments/<< parameters.cluster >>.auto.tfvars.json.tpl -o << parameters.cluster >>.auto.tfvars.json
+      - op/tpl:
+          tpl-path: environments
+          tpl-file: << parameters.account >>.auto.tfvars.json
+      - terraform/terraformrc
+      - do/bash-functions
 
   aws-integration-tests:
     description: run awspec aws configuration tests
@@ -157,6 +153,7 @@ workflows:
           name: apply prod-i01-aws-us-east-2 changes
           context: *context
           workspace: prod-i01-aws-us-east-2
+          gren: true
           before-apply:
             - set-environment:
                 cluster: prod-i01-aws-us-east-2
