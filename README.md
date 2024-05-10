@@ -12,7 +12,6 @@ While the PSK lab only makes use of two vpcs, a typical multi-region Engineering
 Also, note that having multiple cluster in multiple regions as part of the same role requires a more complex network configuration. For cost purposes, our live lab environment does not make use of either multi-region clusters nor networks. See the ps-aws-platform-wan repo and inline comments in this repo for examples of such a configuration.  
 
 ## reservations
-
 | vpc                     | region          | az                | az                | az                | total IPs |
 |-------------------------|:---------------:|:-----------------:|:-----------------:|:-----------------:|:---------:|
 |                         |                 |                   |                   |                   |           |
