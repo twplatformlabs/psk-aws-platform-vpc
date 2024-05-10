@@ -63,6 +63,23 @@ variable "vpc_private_subnets" {
   }
 }
 
+variable "vpc_intra_subnets" {
+  description = "intra subnet"
+  type        = list(string)
+
+  validation {
+    condition = alltrue([
+      for v in var.vpc_intra_subnets : can(cidrhost(v, 32))
+    ])
+    error_message = "Invalid IPv4 CIDR"
+  }
+
+  validation {
+    condition     = length(var.vpc_intra_subnets) == 3
+    error_message = "length of list(string) not equal to 3 "
+  }
+}
+
 variable "vpc_public_subnets" {
   description = "public ingress load balancer subnet"
   type        = list(string)

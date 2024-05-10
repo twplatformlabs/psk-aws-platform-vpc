@@ -9,23 +9,33 @@ module "vpc" {
   # private, node subnet
   private_subnets       = var.vpc_private_subnets
   private_subnet_suffix = "private-subnet"
-  private_subnet_tags = {
+  private_subnet_tags   = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "Tier"                                      = "node"
+    "karpenter.sh/discovery"                    = "${var.cluster_name}-vpc"
   }
 
   # public ingress subnet
   public_subnets       = var.vpc_public_subnets
   public_subnet_suffix = "public-subnet"
-  public_subnet_tags = {
+  public_subnet_tags   = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                    = "1"
     "Tier"                                      = "public"
   }
 
+  # intra, non-outbound route subnet
+  intra_subnets       = var.vpc_intra_subnets
+  intra_subnet_suffix = "intra-subnet"
+  intra_subnet_tags   = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "Tier"                                      = "intra"
+  }
+
+  # dedicated cluster database subnet
   database_subnets       = var.vpc_database_subnets
   database_subnet_suffix = "database-subnet"
-  database_subnet_tags = {
+  database_subnet_tags   = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "Tier"                                      = "database"
   }
