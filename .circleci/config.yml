@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  terraform: twdps/terraform@3.0.1
+  terraform: twdps/terraform@3.1.1
   op: twdps/onepassword@3.0.0
   do: twdps/pipeline-events@4.1.0
 
@@ -21,8 +21,6 @@ on-tag-main: &on-tag-main
     ignore: /.*/
   tags:
     only: /.*/
-
-# ============================================================ commands and jobs
 
 commands:
 
@@ -75,8 +73,6 @@ jobs:
           cluster: << parameters.cluster >>
       - aws-integration-tests:
           cluster: << parameters.cluster >>
-
-# ============================================================ workflows
 
 workflows:
 
@@ -172,6 +168,7 @@ workflows:
           name: generate release notes
           context: *context
           on-tag: true
+          additional-args: "--data-source=commits"
           before-release:
             - op/env:
                 env-file: op.prod-i01-aws-us-east-2.env
