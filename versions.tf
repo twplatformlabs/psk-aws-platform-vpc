@@ -9,7 +9,7 @@ terraform {
 
   backend "remote" {
     hostname     = "app.terraform.io"
-    organization = "twdps"
+    organization = "twplatformlabs"
     workspaces {
       prefix = "psk-aws-platform-vpc-"
     }

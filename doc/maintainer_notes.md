@@ -1,9 +1,9 @@
 <div align="center">
 	<p>
-	<img alt="Thoughtworks Logo" src="https://raw.githubusercontent.com/ThoughtWorks-DPS/static/master/thoughtworks_flamingo_wave.png?sanitize=true" width=200 /><br />
-	<img alt="DPS Title" src="https://raw.githubusercontent.com/ThoughtWorks-DPS/static/master/EMPCPlatformStarterKitsImage.png?sanitize=true" width=350/><br />
+	<img alt="Thoughtworks Logo" src="https://raw.githubusercontent.com/twplatformlabs/static/master/thoughtworks_flamingo_wave.png?sanitize=true" width=200 /><br />
+	<img alt="DPS Title" src="https://raw.githubusercontent.com/twplatformlabs/static/master/EMPCPlatformStarterKitsImage.png?sanitize=true" width=350/><br />
 	<h2>psk-aws-iam-profiles</h2>
-	<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/github/license/ThoughtWorks-DPS/psk-aws-platform-vpc"></a> <a href="https://aws.amazon.com"><img src="https://img.shields.io/badge/-deployed-blank.svg?style=social&logo=amazon"></a>
+	<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/github/license/twplatformlabs/psk-aws-platform-vpc"></a> <a href="https://aws.amazon.com"><img src="https://img.shields.io/badge/-deployed-blank.svg?style=social&logo=amazon"></a>
 	</p>
 </div>
 
@@ -60,7 +60,7 @@ terraform-aws-modules/vpc/aws
 * Common [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks)
 * [pre-commit-terraform](https://github.com/antonbabenko/pre-commit-terraform)
 * [awslabs/git-secrets](https://github.com/awslabs/git-secrets)
-* Circleci Executor: [twdps/circleci-infra-aws](https://github.com/ThoughtWorks-DPS/circleci-infra-aws)
+* Circleci Executor: [twdps/circleci-infra-aws](https://github.com/twplatformlabs/circleci-infra-aws)
 * [Terraform Cloud](https://app.terraform.io/) for backend state
 * [1password](https://1password.com) for secrets
 * [awspec(https://github.com/k1LoW/awspec)]

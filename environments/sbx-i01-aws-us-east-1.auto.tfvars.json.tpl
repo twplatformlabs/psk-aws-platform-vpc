@@ -1,6 +1,6 @@
 {
   "cluster_name": "sbx-i01-aws-us-east-1",
-  "aws_account_id": "{{ op://empc-lab/aws-dps-2/aws-account-id }}",
+  "aws_account_id": "{{ op://platform/aws-sandbox/aws-account-id }}",
   "aws_assume_role": "PSKRoles/PSKPlatformVPCRole",
   "aws_region": "us-east-1",
   "vpc_cidr": "10.80.0.0/16",

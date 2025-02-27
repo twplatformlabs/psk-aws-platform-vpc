@@ -1,6 +1,6 @@
 {
   "cluster_name": "prod-i01-aws-us-east-2",
-  "aws_account_id": "{{ op://empc-lab/aws-dps-1/aws-account-id }}",
+  "aws_account_id": "{{ op://platform/aws-production/aws-account-id }}",
   "aws_assume_role": "PSKRoles/PSKPlatformVPCRole",
   "aws_region": "us-east-2",
   "vpc_cidr": "10.90.0.0/16",
