@@ -2,13 +2,15 @@
 version: 2.1
 
 orbs:
-  terraform: twdps/terraform@3.1.1
+  terraform: twdps/terraform@4.0.0
   op: twdps/onepassword@3.0.0
-  do: twdps/pipeline-events@5.1.0
+  do: twdps/pipeline-events@5.3.2
 
 globals:
   - &context platform
-  - &executor-image twdps/circleci-infra-aws:alpine-2025.04
+  - &sbx-i01-aws-us-east-1-workspace psk-aws-platform-vpc-sbx-i01-aws-us-east-1
+  - &prod-i01-aws-us-east-2-workspace psk-aws-platform-vpc-prod-i01-aws-us-east-2
+  - &executor-image ghcr.io/twplatformlabs/circleci-infra-aws:alpine-latest
 
 on-push-main: &on-push-main
   branches:
@@ -30,12 +32,18 @@ commands:
       cluster:
         description: cluster to be configured
         type: string
+      workspace:
+        description: terraform cloud workspace
+        type: string
     steps:
       - op/env:
           env-file: op.<< parameters.cluster >>.env
       - op/tpl:
           tpl-path: environments
           tpl-file: << parameters.cluster >>.auto.tfvars.json
+      - terraform/tfc-backend:
+          tfc-organization: twplatformlabs
+          tfc-workspace: << parameters.workspace >>
       - terraform/terraformrc
       - do/bash-functions
 
@@ -71,6 +79,7 @@ jobs:
       - setup_remote_docker
       - set-environment:
           cluster: << parameters.cluster >>
+          workspace: << parameters.workspace >>
       - aws-integration-tests:
           cluster: << parameters.cluster >>
 
@@ -84,8 +93,7 @@ workflows:
       - terraform/static-analysis:
           name: static code analysis
           context: *context
-          executor-image: *executor-image
-          workspace: sbx-i01-aws-us-east-1
+          workspace: *sbx-i01-aws-us-east-1-workspace
           tflint-scan: true
           tflint-provider: aws
           trivy-scan: true
@@ -97,12 +105,12 @@ workflows:
       - terraform/plan:
           name: sbx-i01-aws-us-east-1 change plan
           context: *context
-          executor-image: *executor-image
-          workspace: sbx-i01-aws-us-east-1
+          workspace: *sbx-i01-aws-us-east-1-workspace
           checkov-scan: true
           before-plan:
             - set-environment:
                 cluster: sbx-i01-aws-us-east-1
+                workspace: *sbx-i01-aws-us-east-1-workspace
           filters: *on-push-main
 
       - approve sbx-i01-aws-us-east-1 changes:
@@ -115,10 +123,11 @@ workflows:
       - terraform/apply:
           name: apply sbx-i01-aws-us-east-1 changes
           context: *context
-          workspace: sbx-i01-aws-us-east-1
+          workspace: *sbx-i01-aws-us-east-1-workspace
           before-apply:
             - set-environment:
                 cluster: sbx-i01-aws-us-east-1
+                workspace: *sbx-i01-aws-us-east-1-workspace
           after-apply:
             - aws-integration-tests:
                 cluster: sbx-i01-aws-us-east-1
@@ -131,12 +140,12 @@ workflows:
       - terraform/plan:
           name: prod-i01-aws-us-east-2 change plan
           context: *context
-          executor-image: *executor-image
-          workspace: prod-i01-aws-us-east-2
+          workspace: *prod-i01-aws-us-east-2-workspace
           checkov-scan: true
           before-plan:
             - set-environment:
                 cluster: prod-i01-aws-us-east-2
+                workspace: *prod-i01-aws-us-east-2-workspace
           filters: *on-tag-main
 
       - approve prod-i01-aws-us-east-2 changes:
@@ -148,10 +157,11 @@ workflows:
       - terraform/apply:
           name: apply prod-i01-aws-us-east-2 changes
           context: *context
-          workspace: prod-i01-aws-us-east-2
+          workspace: *prod-i01-aws-us-east-2-workspace
           before-apply:
             - set-environment:
                 cluster: prod-i01-aws-us-east-2
+                workspace: *prod-i01-aws-us-east-2-workspace
           after-apply:
             - aws-integration-tests:
                 cluster: prod-i01-aws-us-east-2
