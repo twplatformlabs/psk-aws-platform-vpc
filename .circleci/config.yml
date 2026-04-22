@@ -74,6 +74,9 @@ jobs:
       cluster:
         description: nonprod or production cluster configuration
         type: string
+      workspace:
+        description: terraform cloud workspace
+        type: string
     steps:
       - checkout
       - setup_remote_docker
@@ -209,7 +212,9 @@ workflows:
           name: sbx-i01-aws-us-east-1 integration test
           context: *context
           cluster: sbx-i01-aws-us-east-1
+          workspace: *sbx-i01-aws-us-east-1-workspace
       - recurring-integration-tests:
           name: prod-i01-aws-us-east-2 integration test
           context: *context
           cluster: prod-i01-aws-us-east-2
+          workspace: *prod-i01-aws-us-east-2-workspace
