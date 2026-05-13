@@ -35,7 +35,7 @@ variable "vpc_azs" {
 
   validation {
     condition = alltrue([
-      for v in var.vpc_azs : can(regex("[a-z][a-z]-[a-z]+-[1-9][a-c]", v))
+      for v in var.vpc_azs : can(regex("[a-z][a-z]-[a-z]+-[1-9][a-d]", v))
     ])
     error_message = "Invalid VPC AZ name"
   }
