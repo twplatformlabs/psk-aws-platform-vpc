@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 1.14"
+  required_version = "~> 1.15"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -8,7 +8,7 @@ terraform {
   }
 
   # The backend cloud store is managed using the terraform orb tfc-backend command.
-  # this command will generate the appropriate template for the tf workspace:
+  # this command will generate the appropriate template for the tf workspace: DO NOT UNCOMMENT
   #
   # terraform {
   #   cloud {
