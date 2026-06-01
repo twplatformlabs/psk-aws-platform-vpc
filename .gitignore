@@ -6,3 +6,4 @@ source.env
 *.auto.tfvars.json
 .terraform*
 kubeconfig
+terraform-backend.tf
